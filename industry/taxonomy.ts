@@ -12,12 +12,11 @@
  * feedLabel 是分类 RSS 标题里的名字（不写就用 label）。公开接口、RSS 和 MCP 里要把一类并进另一类发布，写在站点设置里（site/site.ts 的 PUBLIC_CATEGORIES）。
  */
 export const CATEGORIES = [
-  { key: "ai-models", tagColor: "indigo", label: "模型", feedLabel: "AI 模型", section: "模型发布/更新", guide: "模型本身的发布、版本、权重开放、能力或价格变化，以及既有榜单上的模型成绩。公布一次跑分不是发布新基准，也不是教程。" },
-  { key: "ai-products", tagColor: "turquoise", label: "产品", feedLabel: "AI 产品", section: "产品发布/更新", guide: "可使用的 AI 产品、功能、应用、工具、API、平台和工程组件的发布更新。模型厂商发布的推理框架、算子库、硬件适配组件仍是产品，不能因为厂商名归成模型。" },
-  { key: "industry", tagColor: "orange", label: "行业", feedLabel: "行业动态", section: "行业动态", guide: "已发生的公司经营、融资并购、人事、合作、诉讼、政策、真实安全事故及调查进展。新闻由当事人发帖、带有态度，也不因此变成观点。" },
-  { key: "paper", tagColor: "violet", label: "论文", feedLabel: "论文", section: "论文研究", guide: "以新研究方法、实验设计与发现为核心的论文、技术报告、新基准或研究数据集。系统性红队实验属于研究；既有榜单成绩归模型，真实事故的新闻调查归行业。" },
-  { key: "tip", tagColor: "green", label: "教程", section: "技巧与观点", guide: "读者可以照着使用的方法、提示词、工具用法、工程实践复盘与技术讲解。重点是可复用的做法；单纯发布工具归产品，只有态度和预测而无做法归观点。", commentary: true },
-  { key: "opinion", tagColor: "purple", label: "观点", section: "技巧与观点", guide: "重点是作者的解释、判断、主张、预测、评论或访谈观点。讨论市场不自动归行业，作者是名人不自动归观点。", commentary: true },
+  { key: "tender", tagColor: "indigo", label: "招标公告", feedLabel: "招标公告", section: "招标公告", guide: "公开招标、邀请招标、竞争性磋商、竞争性谈判、询价、资格预审等采购公告，以及同一项目的变更、澄清、更正、延期、终止/废标公告。重点是车路云一体化、路侧感知、边缘计算、车载终端、云控平台、高精地图、智慧高速与智能网联先导区相关的信息化与智能网联标段；纯土木施工标段不归这里。" },
+  { key: "intent", tagColor: "turquoise", label: "采购意向", feedLabel: "采购意向", section: "采购意向", guide: "采购人按规定公开的采购意向与招标计划：预计采购时间、预算金额、需求概况，尚未正式招标。已正式发招标公告的归招标公告。" },
+  { key: "award", tagColor: "orange", label: "结果公示", feedLabel: "中标/成交结果", section: "中标/成交结果", guide: "中标/成交结果公告、中标候选人公示、合同公告与验收结果。公布的是谁中了标、中了多少钱，不是再次招标。" },
+  { key: "policy", tagColor: "violet", label: "政策试点", feedLabel: "政策与试点", section: "政策与试点", guide: "官方发布的车路云一体化与智能网联汽车政策、试点城市名单、实施方案、技术标准与管理办法。来自政府或主管部门官网，不是媒体解读或行业评论。" },
+  { key: "industry", tagColor: "green", label: "项目动态", feedLabel: "项目动态", section: "项目动态", guide: "官方披露的项目建设进展、开工、通车、验收与运营动态，以及行业会议、调研。不含纯土木施工、绿化养护、房建工程，也不含办公耗材、后勤物业与无关信息化维保。" },
 ] as const satisfies ReadonlyArray<{ key: string; tagColor: string; label: string; feedLabel?: string; section: string; guide: string; commentary?: true }>;
 
 /**
@@ -25,44 +24,43 @@ export const CATEGORIES = [
  * category 是类别，tag 是标签，两者都对上才算；unit 接在数字后面。
  * 没有这样一类的行业设成 null，报头就不显示这个数。
  */
-export const RELEASE: { category: string; tag: string; unit: string } | null = { category: "ai-models", tag: "模型发布", unit: "个新模型" };
+export const RELEASE: { category: string; tag: string; unit: string } | null = { category: "tender", tag: "招标公告", unit: "条新招标" };
 
 /** 周报月报的总述可以直接写、不必在报道里找到出处的行业通用词（小写）。站名会自动算进去。 */
-export const PLAIN_TERMS: readonly string[] = ["ai", "api", "llm", "gpu", "agi", "ceo", "ipo"];
+export const PLAIN_TERMS: readonly string[] = ["rsu", "obu", "mec", "v2x", "etc", "5g", "ai", "lidar"];
 
 /**
  * 内容理解一步给每篇资料判的“内容类型”（写在 prompts/content-understanding.md 里，改了类型要同步改那份提示词）。
  * 评分提示词（prompts/selection-score.md）按类型给五个维度不同的权重。
  */
-export const ITEM_TYPES = ["model_release", "product_launch", "tool_or_prompt", "research_paper", "industry_event", "opinion_analysis", "tutorial_explainer"] as const;
+export const ITEM_TYPES = ["tender_notice", "procurement_intent", "award_result", "policy_pilot", "project_progress", "general_news"] as const;
 
 // ── 标签词表 ────────────────────────────────────────────────────────────────────────────
 
 /** 每篇资料的第一个标签必须是这些“分类标签”之一。 */
 export const CATEGORY_TAGS = [
-  "产品更新", "模型发布", "论文/研究", "开源/仓库", "教程/实践", "现象/趋势", "大佬观点", "评测/基准", "安全/对齐", "行业动态", "政策/监管",
-  "非AI/通用工具", "其他",
+  "招标公告", "采购意向", "中标/成交", "变更/澄清", "终止/废标", "政策/试点", "项目动态", "其他",
 ] as const;
 
 /** 可选的主题标签。 */
 export const TOPIC_TAGS = [
-  "Agent", "编码", "推理", "多模态", "语音", "视频", "图像生成", "RAG", "端侧", "数据/训练", "搜索", "部署/工程", "开源生态", "具身智能", "MCP/工具调用",
+  "车路云一体化", "V2X/车路协同", "RSU/路侧单元", "激光雷达", "毫米波雷达", "雷视一体机", "MEC/边缘计算", "OBU/车载终端", "云控平台", "高精地图", "智慧高速", "智能网联先导区", "信号控制",
 ] as const;
 
 /** 可选的实体标签（公司、机构、平台）。 */
-export const ENTITY_TAGS = ["OpenAI", "Anthropic", "DeepSeek", "DeepMind", "Google", "Meta", "Microsoft", "xAI", "Hugging Face", "GitHub", "arXiv"] as const;
+export const ENTITY_TAGS = ["河北交投", "中交集团", "中国中铁", "中国铁建", "招商局集团", "交通运输部", "北京车网", "湘江智能"] as const;
 
 /** 模型常写的近义词，统一成词表里的写法。 */
 export const TAG_SYNONYMS: Readonly<Record<string, string>> = {
-  "教程/玩法": "教程/实践", "技巧/最佳实践": "教程/实践", "合作/生态": "行业动态", "融资/收购": "行业动态", "公司动态": "行业动态",
-  合作: "行业动态", 生态: "行业动态", 融资: "行业动态", 收购: "行业动态", 投资: "行业动态", 并购: "行业动态",
-  政策: "政策/监管", 监管: "政策/监管", 法规: "政策/监管", 安全: "安全/对齐", 对齐: "安全/对齐",
-  论文: "论文/研究", 研究: "论文/研究", paper: "论文/研究", papers: "论文/研究",
-  "open-source": "开源/仓库", 开源: "开源/仓库", 仓库: "开源/仓库", repo: "开源/仓库",
-  教程: "教程/实践", 玩法: "教程/实践", 指南: "教程/实践", 技巧: "教程/实践", 最佳实践: "教程/实践", 实践: "教程/实践",
-  产品: "产品更新", 更新: "产品更新", 发布: "模型发布", 模型: "模型发布", 趋势: "现象/趋势", 现象: "现象/趋势", 观点: "大佬观点",
-  视频生成: "视频", 非ai: "非AI/通用工具", "non-ai": "非AI/通用工具", 通用工具: "非AI/通用工具", 工程工具: "非AI/通用工具",
-  安全扫描: "非AI/通用工具", devops: "非AI/通用工具", 行业: "行业动态", 动态: "行业动态",
+  招标: "招标公告", 公开招标: "招标公告", 采购公告: "招标公告", 竞争性磋商: "招标公告", 竞争性谈判: "招标公告", 询价: "招标公告", 资格预审: "招标公告", 邀请招标: "招标公告",
+  中标: "中标/成交", 成交: "中标/成交", 结果公示: "中标/成交", 中标候选人: "中标/成交", 合同公告: "中标/成交", 验收: "中标/成交",
+  变更: "变更/澄清", 澄清: "变更/澄清", 延期: "变更/澄清", 更正: "变更/澄清", 补遗: "变更/澄清",
+  终止: "终止/废标", 废标: "终止/废标", 流标: "终止/废标",
+  采购意向: "采购意向", 意向公开: "采购意向", 招标计划: "采购意向",
+  政策: "政策/试点", 试点: "政策/试点", 实施方案: "政策/试点", 标准: "政策/试点", 管理办法: "政策/试点",
+  项目进展: "项目动态", 开工: "项目动态", 通车: "项目动态", 运营: "项目动态", 会议: "项目动态", 调研: "项目动态",
+  车路云: "车路云一体化", 车路协同: "V2X/车路协同", 路侧单元: "RSU/路侧单元", 路侧感知: "RSU/路侧单元", 边缘计算: "MEC/边缘计算", 车载终端: "OBU/车载终端", 车载单元: "OBU/车载终端",
+  云控基础平台: "云控平台", 智能网联: "智能网联先导区", 先导区: "智能网联先导区", 雷视一体: "雷视一体机", 信控: "信号控制", 信号优化: "信号控制",
 };
 
 // ── 公司与主体 ──────────────────────────────────────────────────────────────────────────
@@ -74,24 +72,14 @@ export const TAG_SYNONYMS: Readonly<Record<string, string>> = {
  * 所有这些名字都用来认出说的是哪家公司，比如把事实的主体对到发布方。
  */
 export const ENTITIES: Record<string, { name: string; displayTag: string | null; aliases: string[]; orgNames?: string[]; otherNames?: string[] }> = {
-  "world-labs": { name: "World Labs", displayTag: null, aliases: ["World Labs"] },
-  "thinking-machines": { name: "Thinking Machines Lab", displayTag: null, aliases: ["Thinking Machines"] },
-  amd: { name: "AMD", displayTag: null, aliases: ["AMD", "Advanced Micro Devices"] },
-  openai: { name: "OpenAI", displayTag: "OpenAI", aliases: ["OpenAI", "ChatGPT", "Sora", "Codex", "GPT"], orgNames: ["OpenAI"], otherNames: ["OpenAI Developers"] },
-  anthropic: { name: "Anthropic", displayTag: "Anthropic", aliases: ["Anthropic", "Claude"], orgNames: ["Anthropic"], otherNames: ["Claude Code"] },
-  google: { name: "Google", displayTag: "Google", aliases: ["Google", "DeepMind", "Gemini", "谷歌"], orgNames: ["Google DeepMind", "Google Research", "Google", "DeepMind", "谷歌"], otherNames: ["Google AI", "Google Labs", "Google Cloud"] },
-  deepseek: { name: "DeepSeek", displayTag: "DeepSeek", aliases: ["DeepSeek", "深度求索"], orgNames: ["DeepSeek", "深度求索"] },
-  qwen: { name: "千问 Qwen", displayTag: null, aliases: ["Qwen", "通义", "阿里"], orgNames: ["通义千问", "通义实验室", "阿里巴巴", "阿里云", "阿里", "Qwen Team", "Qwen", "Alibaba"], otherNames: ["千问", "千问APP", "Alibaba Cloud"] },
-  kimi: { name: "月之暗面 / Kimi", displayTag: null, aliases: ["Kimi", "月之暗面", "Moonshot", "Kimi / 月之暗面"], orgNames: ["Moonshot AI", "月之暗面", "Kimi"] },
-  minimax: { name: "MiniMax", displayTag: null, aliases: ["MiniMax", "海螺"], orgNames: ["MiniMax", "稀宇科技"] },
-  zhipu: { name: "智谱 GLM", displayTag: null, aliases: ["智谱", "GLM", "Z.ai"], orgNames: ["智谱AI", "智谱", "Zhipu AI", "Z.ai"], otherNames: ["Zhipu"] },
-  xai: { name: "xAI", displayTag: "xAI", aliases: ["xAI", "Grok"], orgNames: ["SpaceX Super Intelligence", "SpaceXAI", "SpaceXSI", "xAI"], otherNames: ["Grok Bot"] },
-  meta: { name: "Meta", displayTag: "Meta", aliases: ["Meta", "Llama"], orgNames: ["Meta Superintelligence Labs", "Meta AI", "Meta"], otherNames: ["AI at Meta", "Muse"] },
-  microsoft: { name: "Microsoft", displayTag: "Microsoft", aliases: ["Microsoft", "微软", "Copilot"], orgNames: ["Microsoft Research", "Microsoft AI", "Microsoft", "微软"] },
-  nvidia: { name: "NVIDIA", displayTag: null, aliases: ["NVIDIA", "英伟达"], orgNames: ["NVIDIA", "英伟达"] },
-  "hugging-face": { name: "Hugging Face", displayTag: "Hugging Face", aliases: ["Hugging Face"], orgNames: ["Hugging Face", "HuggingFace"] },
-  cursor: { name: "Cursor", displayTag: null, aliases: ["Cursor", "Anysphere"], orgNames: ["Cursor"] },
-  openrouter: { name: "OpenRouter", displayTag: null, aliases: ["OpenRouter"], orgNames: ["OpenRouter"] },
+  hebtig: { name: "河北交投集团", displayTag: "河北交投", aliases: ["河北交投", "河北交通投资集团", "河北省交通投资集团"], orgNames: ["河北交通投资集团有限公司", "河北省交通投资集团有限公司"] },
+  ccccltd: { name: "中交集团", displayTag: "中交集团", aliases: ["中交集团", "中国交建", "中国交通建设集团", "CCCC"], orgNames: ["中国交通建设集团有限公司", "中国交通建设股份有限公司"] },
+  crec: { name: "中国中铁", displayTag: "中国中铁", aliases: ["中国中铁", "中铁集团"], orgNames: ["中国中铁股份有限公司"] },
+  crcc: { name: "中国铁建", displayTag: "中国铁建", aliases: ["中国铁建", "铁建"], orgNames: ["中国铁建股份有限公司"] },
+  cmgroup: { name: "招商局集团", displayTag: "招商局集团", aliases: ["招商局", "招商局集团"], orgNames: ["招商局集团有限公司"] },
+  mot: { name: "交通运输部", displayTag: "交通运输部", aliases: ["交通运输部", "交通部"], orgNames: ["交通运输部"] },
+  bjchewang: { name: "北京车网", displayTag: "北京车网", aliases: ["北京车网", "北京车网科技发展"], orgNames: ["北京车网科技发展有限公司"], otherNames: ["北京车网科技"] },
+  xiangjiang: { name: "湘江智能", displayTag: "湘江智能", aliases: ["湘江智能", "湖南湘江智能"], orgNames: ["湖南湘江智能科技创新中心有限公司"] },
 };
 
 /**
@@ -99,57 +87,21 @@ export const ENTITIES: Record<string, { name: string; displayTag: string | null;
  * 行业没有这个问题时可以留空数组。
  */
 export const IDENTITY_LEXICON: ReadonlyArray<{ id: string; name: string; patterns: RegExp[] }> = [
-  { id: "openai", name: "OpenAI", patterns: [/openai|chatgpt|\bgpt-?[o\d]|\bsora\b|\bcodex\b/i] },
-  { id: "anthropic", name: "Anthropic", patterns: [/anthropic|\bclaude\b/i, /\b(?:opus|sonnet|haiku)\s*\d+(?:[.\-]\d+)*\b/i, /\bfable\s*\d+(?:[.\-]\d+)*\b|\bmythos\b/i] },
-  { id: "google", name: "Google / Gemini", patterns: [/google|deepmind|\bgemini\b|notebooklm|\bveo\s?\d|\bAlphaFold\b|\bAMIE\b/i] },
-  { id: "deepseek", name: "DeepSeek", patterns: [/deepseek|深度求索/i] },
-  { id: "xai", name: "xAI / Grok", patterns: [/\bxai\b|\bgrok\b/i] },
-  { id: "meta", name: "Meta / Llama", patterns: [/\bMeta\b/, /\bmeta\s?ai\b|\bllama\b/i] },
-  { id: "microsoft", name: "Microsoft / Copilot", patterns: [/microsoft|copilot|微软/i] },
-  { id: "nvidia", name: "NVIDIA", patterns: [/nvidia|英伟达|\bnemotron\b|\bnemo\b|\bblackwell\b|\brubin(?:\s+ultra)?\b|\bcuda\b/i] },
-  { id: "qwen", name: "千问 Qwen", patterns: [/\bqwen|通义|千问/i] },
-  { id: "hugging-face", name: "Hugging Face", patterns: [/hugging\s?face/i] },
-  { id: "cursor", name: "Cursor", patterns: [/\bCursor\b/] },
-  { id: "kimi", name: "月之暗面 / Kimi", patterns: [/\bkimi\b|月之暗面|\bmoonshot\s?ai\b/i] },
-  { id: "openrouter", name: "OpenRouter", patterns: [/openrouter/i] },
-  { id: "minimax", name: "MiniMax", patterns: [/minimax/i] },
-  { id: "zhipu", name: "智谱 GLM", patterns: [/智谱|\bglm-?[4-9]/i] },
-  { id: "hunyuan", name: "腾讯混元", patterns: [/混元|hunyuan/i] },
-  { id: "doubao", name: "字节豆包", patterns: [/豆包|doubao|字节跳动|bytedance/i] },
-  { id: "mistral", name: "Mistral", patterns: [/mistral/i] },
-  { id: "perplexity", name: "Perplexity", patterns: [/\bPerplexity\b/] },
-  { id: "runway", name: "Runway", patterns: [/\brunway\b/i] },
-  { id: "suno", name: "Suno", patterns: [/\bsuno\b/i] },
-  { id: "midjourney", name: "Midjourney", patterns: [/midjourney/i] },
-  { id: "stability-ai", name: "Stability AI", patterns: [/stability\s?ai/i] },
-  { id: "elevenlabs", name: "ElevenLabs", patterns: [/eleven\s?labs/i] },
-  { id: "vllm", name: "vLLM", patterns: [/\bvllm\b/i] },
-  { id: "ollama", name: "Ollama", patterns: [/\bollama\b/i] },
-  { id: "windsurf", name: "Windsurf", patterns: [/windsurf/i] },
-  { id: "devin", name: "Devin", patterns: [/\bdevin\b/i] },
-  { id: "manus", name: "Manus", patterns: [/\bmanus\b/i] },
-  { id: "apple", name: "Apple AI", patterns: [/\bapple\s?(intelligence|silicon|ai)\b|苹果(智能|\s?AI)/i] },
-  { id: "amazon", name: "Amazon / AWS", patterns: [/amazon|\baws\b|亚马逊/i] },
-  { id: "baidu", name: "百度文心", patterns: [/百度|baidu|文心|\bernie\s?bot\b/i] },
+  { id: "hebtig", name: "河北交投集团", patterns: [/河北交投|河北.{0,4}交通投资/i] },
+  { id: "ccccltd", name: "中交集团", patterns: [/中交集团|中国交建|中国交通建设/i, /\bCCCC\b/] },
+  { id: "crec", name: "中国中铁", patterns: [/中国中铁/i] },
+  { id: "crcc", name: "中国铁建", patterns: [/中国铁建/i] },
+  { id: "cmgroup", name: "招商局集团", patterns: [/招商局/i] },
+  { id: "mot", name: "交通运输部", patterns: [/交通运输部|交通部/i] },
+  { id: "bjchewang", name: "北京车网", patterns: [/北京车网/i] },
+  { id: "xiangjiang", name: "湘江智能", patterns: [/湘江智能/i] },
 ];
 
 /** 这些域名上的文章，发布方就是对应的公司（托管平台如 GitHub、arXiv 不算）。 */
 export const PUBLISHER_DOMAINS: ReadonlyArray<{ entityId: string; domains: readonly string[] }> = [
-  { entityId: "openai", domains: ["openai.com"] },
-  { entityId: "anthropic", domains: ["anthropic.com", "claude.com"] },
-  { entityId: "google", domains: ["deepmind.google", "ai.google", "blog.google"] },
-  { entityId: "deepseek", domains: ["deepseek.com"] },
-  { entityId: "xai", domains: ["x.ai"] },
-  { entityId: "meta", domains: ["ai.meta.com"] },
-  { entityId: "microsoft", domains: ["microsoft.com"] },
-  { entityId: "nvidia", domains: ["nvidia.com"] },
-  { entityId: "qwen", domains: ["qwen.ai"] },
-  { entityId: "cursor", domains: ["cursor.com"] },
-  { entityId: "openrouter", domains: ["openrouter.ai"] },
+  { entityId: "hebtig", domains: ["ebidding.hebtig.com"] },
+  { entityId: "mot", domains: ["mot.gov.cn", "xxgk.mot.gov.cn"] },
 ];
 
 /** 原文里的这些写法也算提到了对应公司。 */
-export const IDENTITY_CONTEXT_ALIASES: ReadonlyArray<{ entityId: string; pattern: RegExp }> = [
-  { entityId: "meta", pattern: /@AIatMeta\b/i },
-  { entityId: "zhipu", pattern: /\bZhipu(?:\s+AI\b|['’]s\b)/i },
-];
+export const IDENTITY_CONTEXT_ALIASES: ReadonlyArray<{ entityId: string; pattern: RegExp }> = [];

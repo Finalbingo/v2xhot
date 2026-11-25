@@ -1,367 +1,1088 @@
 {
-  "$comment": "示范信源：首次启动时导入（scripts/seed.ts），已存在的不会被覆盖。之后在后台“信源”里新建、修改和暂停。字段说明见 docs/customize.md。",
+  "$comment": "示范信源：首次启动时导入（scripts/seed.ts），已存在的不会被覆盖，改配置要在后台「信源」里改或重跑 seed 后手动 update；之后在后台新建、修改和暂停。全部为官方一手平台：中国政府采购网（中央/地方 × 7 类公告频道）、全国公共资源交易平台交易公开、天津市政府采购网、河北交投、山西省交通运输厅招标公告/结果公示（静态 td.info 列表）、湖北交投/浙江交通集团/辽宁交投/江西交投电子采购平台（同一套 CMS，POST /cms/api/dynamicData/queryContentPage，body 里的 categoryId 决定栏目；辽宁接口不按 categoryId 过滤，故只保留一条）。河北分网实测挡住：/province/cggg/zbgg/ 是静态列表（div.list-item + span.list-item-meta，框架 fromHtml 解出 50 条全部带日期），但采集器请求它返回 HTTP 403 —— 站点 WAF 拒的是框架的爬虫 UA（`Mozilla/5.0 (compatible; <站名>; +<站点>/about)`，http-fetch.ts 的 DEFAULT_UA），换浏览器 UA 同一 URL 就是 200；web_list 配置不支持覆盖 UA，所以没有接入（接了就是每天 403 的死源）。同类 403 大概率也解释了部分省级站探不到。本机验证限制：这台机器的代理把很多 .gov.cn 域名解析成 fake-IP（198.18.0.0/15），采集器的 SSRF 守卫按规则拒绝，所以这些站只能用真实网页 HTML 跑 fromHtml 验证选择器，不能用 fetchWebList 端到端跑；部署机上没有 fake-IP 时同一个配置即可。未接入：北京/吉林/黑龙江/安徽/福建/山东/河南/湖南/广东/重庆/四川/贵州/云南/甘肃/宁夏/新疆等省级公共服务平台本机连不通（curl 000），山西/内蒙古/湖北/海南的省级政采分网列表页是 JS 渲染（首页拿到的是 SPA 壳或 window.location.href 跳转桩，列表数据在 XHR 里，需按站写 modules/<slug>/ 或找到接口后配 json_list）；cebpubservice 的分省接口 deal.ggzy.gov.cn 仍不可达。字段说明见 docs/customize.md。",
   "sources": [
     {
-      "id": "rss-openai-news",
-      "name": "OpenAI News",
-      "kind": "rss",
+      "id": "web-ccgp-zygg",
+      "name": "中国政府采购网 · 中央公告",
+      "kind": "web_list",
       "config": {
-        "feedUrl": "https://openai.com/news/rss.xml",
+        "url": "http://www.ccgp.gov.cn/cggg/zygg/",
+        "parseMode": "html",
+        "itemSelector": "ul.c_list_bid > li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "em:not([rel])",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "http://www.ccgp.gov.cn/cggg/zygg/"
+        ],
         "_aihot": {
-          "initialBackfillLimit": 8
+          "initialBackfillLimit": 30
         }
       },
       "tier": "T1",
-      "owner_entity_id": "openai",
-      "participation_mode": "editorial",
-      "interval_minutes": 120,
-      "tags": [
-        "官方"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "rss-google-deepmind",
-      "name": "Google DeepMind",
-      "kind": "rss",
-      "config": {
-        "feedUrl": "https://deepmind.google/blog/rss.xml",
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1",
-      "owner_entity_id": "google",
-      "participation_mode": "editorial",
-      "interval_minutes": 120,
-      "tags": [
-        "官方"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "rss-google-research",
-      "name": "Google Research",
-      "kind": "rss",
-      "config": {
-        "feedUrl": "https://research.google/blog/rss/",
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1",
-      "owner_entity_id": "google",
-      "participation_mode": "editorial",
-      "interval_minutes": 120,
-      "tags": [
-        "官方",
-        "研究"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "rss-hugging-face",
-      "name": "Hugging Face Blog",
-      "kind": "rss",
-      "config": {
-        "feedUrl": "https://huggingface.co/blog/feed.xml",
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1",
-      "owner_entity_id": "hugging-face",
-      "participation_mode": "editorial",
-      "interval_minutes": 120,
-      "tags": [
-        "官方",
-        "开源"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "rss-microsoft-research",
-      "name": "Microsoft Research",
-      "kind": "rss",
-      "config": {
-        "feedUrl": "https://www.microsoft.com/en-us/research/feed/",
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1",
-      "owner_entity_id": "microsoft",
-      "participation_mode": "editorial",
-      "interval_minutes": 120,
-      "tags": [
-        "官方",
-        "研究"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "rss-nvidia-blog",
-      "name": "NVIDIA Blog",
-      "kind": "rss",
-      "config": {
-        "feedUrl": "https://blogs.nvidia.com/feed/",
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1",
-      "owner_entity_id": "nvidia",
-      "participation_mode": "editorial",
-      "interval_minutes": 120,
-      "tags": [
-        "官方"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "rss-aws-ml",
-      "name": "AWS Machine Learning Blog",
-      "kind": "rss",
-      "config": {
-        "feedUrl": "https://aws.amazon.com/blogs/machine-learning/feed/",
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 120,
-      "tags": [
-        "官方",
-        "教程"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "rss-github-ai",
-      "name": "GitHub Blog · AI & ML",
-      "kind": "rss",
-      "config": {
-        "feedUrl": "https://github.blog/ai-and-ml/feed/",
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 120,
-      "tags": [
-        "官方"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "rss-mistral",
-      "name": "Mistral AI",
-      "kind": "rss",
-      "config": {
-        "feedUrl": "https://mistral.ai/news/rss",
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 120,
-      "tags": [
-        "官方"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "rss-bair",
-      "name": "Berkeley AI Research",
-      "kind": "rss",
-      "config": {
-        "feedUrl": "https://bair.berkeley.edu/blog/feed.xml",
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 180,
-      "tags": [
-        "研究"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "rss-the-verge-ai",
-      "name": "The Verge · AI",
-      "kind": "rss",
-      "config": {
-        "feedUrl": "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml",
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T2",
       "owner_entity_id": null,
       "participation_mode": "editorial",
       "interval_minutes": 60,
       "tags": [
-        "媒体"
+        "官方"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
     {
-      "id": "rss-techcrunch-ai",
-      "name": "TechCrunch · AI",
-      "kind": "rss",
+      "id": "web-ccgp-dfgg",
+      "name": "中国政府采购网 · 地方公告",
+      "kind": "web_list",
       "config": {
-        "feedUrl": "https://techcrunch.com/category/artificial-intelligence/feed/",
+        "url": "http://www.ccgp.gov.cn/cggg/dfgg/",
+        "parseMode": "html",
+        "itemSelector": "ul.c_list_bid > li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "em:not([rel])",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "http://www.ccgp.gov.cn/cggg/dfgg/"
+        ],
         "_aihot": {
-          "initialBackfillLimit": 8
+          "initialBackfillLimit": 30
         }
       },
-      "tier": "T2",
+      "tier": "T1",
       "owner_entity_id": null,
       "participation_mode": "editorial",
       "interval_minutes": 60,
       "tags": [
-        "媒体"
+        "官方"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
     {
-      "id": "rss-ars-technica-ai",
-      "name": "Ars Technica · AI",
-      "kind": "rss",
+      "id": "web-hebtig",
+      "name": "河北交投招标与采购服务平台",
+      "kind": "web_list",
       "config": {
-        "feedUrl": "https://arstechnica.com/ai/feed/",
+        "url": "https://ebidding.hebtig.com/",
+        "parseMode": "html",
+        "itemSelector": "ul.news-items > li",
+        "linkSelector": "a.text-overflow",
+        "titleSelector": "a.text-overflow",
+        "publishedAtSelector": "span.publish-time + span",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://ebidding.hebtig.com/jyxx/"
+        ],
         "_aihot": {
-          "initialBackfillLimit": 8
+          "initialBackfillLimit": 30
         }
       },
-      "tier": "T2",
+      "tier": "T1",
+      "owner_entity_id": "hebtig",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-ccgp-zygg-gkzb",
+      "name": "中国政府采购网 · 中央公告 · 公开招标",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.ccgp.gov.cn/cggg/zygg/gkzb/",
+        "parseMode": "html",
+        "itemSelector": "ul.c_list_bid > li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "em:not([rel])",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        },
+        "allowUrlPrefixes": [
+          "http://www.ccgp.gov.cn/cggg/zygg/gkzb/"
+        ]
+      },
+      "tier": "T1",
       "owner_entity_id": null,
       "participation_mode": "editorial",
       "interval_minutes": 60,
       "tags": [
-        "媒体"
+        "官方"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
     {
-      "id": "rss-mit-tech-review-ai",
-      "name": "MIT Technology Review · AI",
-      "kind": "rss",
+      "id": "web-ccgp-zygg-zbgg",
+      "name": "中国政府采购网 · 中央公告 · 中标结果",
+      "kind": "web_list",
       "config": {
-        "feedUrl": "https://www.technologyreview.com/topic/artificial-intelligence/feed",
+        "url": "http://www.ccgp.gov.cn/cggg/zygg/zbgg/",
+        "parseMode": "html",
+        "itemSelector": "ul.c_list_bid > li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "em:not([rel])",
+        "publishedAtUtcOffset": "+08:00",
         "_aihot": {
-          "initialBackfillLimit": 8
+          "initialBackfillLimit": 30
+        },
+        "allowUrlPrefixes": [
+          "http://www.ccgp.gov.cn/cggg/zygg/zbgg/"
+        ]
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-ccgp-zygg-cjgg",
+      "name": "中国政府采购网 · 中央公告 · 成交结果",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.ccgp.gov.cn/cggg/zygg/cjgg/",
+        "parseMode": "html",
+        "itemSelector": "ul.c_list_bid > li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "em:not([rel])",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        },
+        "allowUrlPrefixes": [
+          "http://www.ccgp.gov.cn/cggg/zygg/cjgg/"
+        ]
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-ccgp-zygg-xjgg",
+      "name": "中国政府采购网 · 中央公告 · 询价公告",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.ccgp.gov.cn/cggg/zygg/xjgg/",
+        "parseMode": "html",
+        "itemSelector": "ul.c_list_bid > li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "em:not([rel])",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        },
+        "allowUrlPrefixes": [
+          "http://www.ccgp.gov.cn/cggg/zygg/xjgg/"
+        ]
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-ccgp-zygg-fblbgg",
+      "name": "中国政府采购网 · 中央公告 · 终止废标",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.ccgp.gov.cn/cggg/zygg/fblbgg/",
+        "parseMode": "html",
+        "itemSelector": "ul.c_list_bid > li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "em:not([rel])",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        },
+        "allowUrlPrefixes": [
+          "http://www.ccgp.gov.cn/cggg/zygg/fblbgg/"
+        ]
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-ccgp-zygg-gzgg",
+      "name": "中国政府采购网 · 中央公告 · 更正澄清",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.ccgp.gov.cn/cggg/zygg/gzgg/",
+        "parseMode": "html",
+        "itemSelector": "ul.c_list_bid > li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "em:not([rel])",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        },
+        "allowUrlPrefixes": [
+          "http://www.ccgp.gov.cn/cggg/zygg/gzgg/"
+        ]
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-ccgp-zygg-qtgg",
+      "name": "中国政府采购网 · 中央公告 · 其他公告",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.ccgp.gov.cn/cggg/zygg/qtgg/",
+        "parseMode": "html",
+        "itemSelector": "ul.c_list_bid > li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "em:not([rel])",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        },
+        "allowUrlPrefixes": [
+          "http://www.ccgp.gov.cn/cggg/zygg/qtgg/"
+        ]
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-ccgp-dfgg-gkzb",
+      "name": "中国政府采购网 · 地方公告 · 公开招标",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.ccgp.gov.cn/cggg/dfgg/gkzb/",
+        "parseMode": "html",
+        "itemSelector": "ul.c_list_bid > li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "em:not([rel])",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        },
+        "allowUrlPrefixes": [
+          "http://www.ccgp.gov.cn/cggg/dfgg/gkzb/"
+        ]
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-ccgp-dfgg-zbgg",
+      "name": "中国政府采购网 · 地方公告 · 中标结果",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.ccgp.gov.cn/cggg/dfgg/zbgg/",
+        "parseMode": "html",
+        "itemSelector": "ul.c_list_bid > li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "em:not([rel])",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        },
+        "allowUrlPrefixes": [
+          "http://www.ccgp.gov.cn/cggg/dfgg/zbgg/"
+        ]
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-ccgp-dfgg-cjgg",
+      "name": "中国政府采购网 · 地方公告 · 成交结果",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.ccgp.gov.cn/cggg/dfgg/cjgg/",
+        "parseMode": "html",
+        "itemSelector": "ul.c_list_bid > li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "em:not([rel])",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        },
+        "allowUrlPrefixes": [
+          "http://www.ccgp.gov.cn/cggg/dfgg/cjgg/"
+        ]
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-ccgp-dfgg-xjgg",
+      "name": "中国政府采购网 · 地方公告 · 询价公告",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.ccgp.gov.cn/cggg/dfgg/xjgg/",
+        "parseMode": "html",
+        "itemSelector": "ul.c_list_bid > li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "em:not([rel])",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        },
+        "allowUrlPrefixes": [
+          "http://www.ccgp.gov.cn/cggg/dfgg/xjgg/"
+        ]
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-ccgp-dfgg-fblbgg",
+      "name": "中国政府采购网 · 地方公告 · 终止废标",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.ccgp.gov.cn/cggg/dfgg/fblbgg/",
+        "parseMode": "html",
+        "itemSelector": "ul.c_list_bid > li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "em:not([rel])",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        },
+        "allowUrlPrefixes": [
+          "http://www.ccgp.gov.cn/cggg/dfgg/fblbgg/"
+        ]
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-ccgp-dfgg-gzgg",
+      "name": "中国政府采购网 · 地方公告 · 更正澄清",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.ccgp.gov.cn/cggg/dfgg/gzgg/",
+        "parseMode": "html",
+        "itemSelector": "ul.c_list_bid > li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "em:not([rel])",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        },
+        "allowUrlPrefixes": [
+          "http://www.ccgp.gov.cn/cggg/dfgg/gzgg/"
+        ]
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-ccgp-dfgg-qtgg",
+      "name": "中国政府采购网 · 地方公告 · 其他公告",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.ccgp.gov.cn/cggg/dfgg/qtgg/",
+        "parseMode": "html",
+        "itemSelector": "ul.c_list_bid > li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "em:not([rel])",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        },
+        "allowUrlPrefixes": [
+          "http://www.ccgp.gov.cn/cggg/dfgg/qtgg/"
+        ]
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-ggzy-national",
+      "name": "全国公共资源交易平台 · 交易公开",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.ggzy.gov.cn/",
+        "parseMode": "html",
+        "itemSelector": "li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "span",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://www.ggzy.gov.cn/information/deal/html/a/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 40
         }
       },
-      "tier": "T2",
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "全国"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-ccgp-tianjin",
+      "name": "天津市政府采购网",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.ccgp-tianjin.gov.cn/",
+        "parseMode": "html",
+        "itemSelector": "li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "span",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "http://www.ccgp-tianjin.gov.cn/viewer.do"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
       "owner_entity_id": null,
       "participation_mode": "editorial",
       "interval_minutes": 120,
       "tags": [
-        "媒体"
+        "官方",
+        "省级"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
     {
-      "id": "rss-the-decoder",
-      "name": "The Decoder",
-      "kind": "rss",
+      "id": "web-hbjttz-zbjh",
+      "name": "湖北交投集团电子采购平台 · 招标计划",
+      "kind": "json_list",
       "config": {
-        "feedUrl": "https://the-decoder.com/feed/",
+        "url": "https://ec.hbjttz.com/cms/api/dynamicData/queryContentPage",
+        "method": "POST",
+        "bodyJson": {
+          "pageNo": 1,
+          "pageSize": 50,
+          "dto": {
+            "siteId": "725",
+            "categoryId": "229"
+          }
+        },
+        "itemsPath": "res.rows",
+        "titlePaths": [
+          "title"
+        ],
+        "summaryPaths": [
+          "description"
+        ],
+        "urlTemplate": "https://ec.hbjttz.com/cms/default/webfile{raw:url}",
+        "publishedAtPath": "publishDate",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://ec.hbjttz.com/cms/default/webfile/"
+        ],
         "_aihot": {
-          "initialBackfillLimit": 8
+          "initialBackfillLimit": 50
         }
       },
-      "tier": "T2",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 60,
-      "tags": [
-        "媒体"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "rss-simon-willison",
-      "name": "Simon Willison",
-      "kind": "rss",
-      "config": {
-        "feedUrl": "https://simonwillison.net/atom/everything/",
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T2",
+      "tier": "T1",
       "owner_entity_id": null,
       "participation_mode": "editorial",
       "interval_minutes": 120,
       "tags": [
-        "个人"
+        "官方",
+        "央企国企"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
     {
-      "id": "rss-import-ai",
-      "name": "Import AI",
-      "kind": "rss",
+      "id": "web-hbjttz-zbgg",
+      "name": "湖北交投集团电子采购平台 · 招标公告",
+      "kind": "json_list",
       "config": {
-        "feedUrl": "https://importai.substack.com/feed",
+        "url": "https://ec.hbjttz.com/cms/api/dynamicData/queryContentPage",
+        "method": "POST",
+        "bodyJson": {
+          "pageNo": 1,
+          "pageSize": 50,
+          "dto": {
+            "siteId": "725",
+            "categoryId": "230"
+          }
+        },
+        "itemsPath": "res.rows",
+        "titlePaths": [
+          "title"
+        ],
+        "summaryPaths": [
+          "description"
+        ],
+        "urlTemplate": "https://ec.hbjttz.com/cms/default/webfile{raw:url}",
+        "publishedAtPath": "publishDate",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://ec.hbjttz.com/cms/default/webfile/"
+        ],
         "_aihot": {
-          "initialBackfillLimit": 8
+          "initialBackfillLimit": 50
         }
       },
-      "tier": "T2",
+      "tier": "T1",
       "owner_entity_id": null,
       "participation_mode": "editorial",
-      "interval_minutes": 180,
+      "interval_minutes": 120,
       "tags": [
-        "个人",
-        "周刊"
+        "官方",
+        "央企国企"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
     {
-      "id": "rss-latent-space",
-      "name": "Latent Space",
-      "kind": "rss",
+      "id": "web-hbjttz-hxr",
+      "name": "湖北交投集团电子采购平台 · 中标候选人公示",
+      "kind": "json_list",
       "config": {
-        "feedUrl": "https://www.latent.space/feed",
+        "url": "https://ec.hbjttz.com/cms/api/dynamicData/queryContentPage",
+        "method": "POST",
+        "bodyJson": {
+          "pageNo": 1,
+          "pageSize": 50,
+          "dto": {
+            "siteId": "725",
+            "categoryId": "232"
+          }
+        },
+        "itemsPath": "res.rows",
+        "titlePaths": [
+          "title"
+        ],
+        "summaryPaths": [
+          "description"
+        ],
+        "urlTemplate": "https://ec.hbjttz.com/cms/default/webfile{raw:url}",
+        "publishedAtPath": "publishDate",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://ec.hbjttz.com/cms/default/webfile/"
+        ],
         "_aihot": {
-          "initialBackfillLimit": 8
+          "initialBackfillLimit": 50
         }
       },
-      "tier": "T2",
+      "tier": "T1",
       "owner_entity_id": null,
       "participation_mode": "editorial",
-      "interval_minutes": 180,
+      "interval_minutes": 120,
       "tags": [
-        "个人"
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-hbjttz-zbgg-result",
+      "name": "湖北交投集团电子采购平台 · 中标公告",
+      "kind": "json_list",
+      "config": {
+        "url": "https://ec.hbjttz.com/cms/api/dynamicData/queryContentPage",
+        "method": "POST",
+        "bodyJson": {
+          "pageNo": 1,
+          "pageSize": 50,
+          "dto": {
+            "siteId": "725",
+            "categoryId": "233"
+          }
+        },
+        "itemsPath": "res.rows",
+        "titlePaths": [
+          "title"
+        ],
+        "summaryPaths": [
+          "description"
+        ],
+        "urlTemplate": "https://ec.hbjttz.com/cms/default/webfile{raw:url}",
+        "publishedAtPath": "publishDate",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://ec.hbjttz.com/cms/default/webfile/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 50
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-cncico-zbyx",
+      "name": "浙江交通集团电子招标采购管理系统 · 招标意向",
+      "kind": "json_list",
+      "config": {
+        "url": "https://cncico.zjgzzc.com/cms/api/dynamicData/queryContentPage",
+        "method": "POST",
+        "bodyJson": {
+          "pageNo": 1,
+          "pageSize": 50,
+          "dto": {
+            "siteId": "725",
+            "categoryId": "221"
+          }
+        },
+        "itemsPath": "res.rows",
+        "titlePaths": [
+          "title"
+        ],
+        "summaryPaths": [
+          "description"
+        ],
+        "urlTemplate": "https://cncico.zjgzzc.com/cms/default/webfile{raw:url}",
+        "publishedAtPath": "publishDate",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://cncico.zjgzzc.com/cms/default/webfile/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 50
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-cncico-zbgg",
+      "name": "浙江交通集团电子招标采购管理系统 · 招标公告",
+      "kind": "json_list",
+      "config": {
+        "url": "https://cncico.zjgzzc.com/cms/api/dynamicData/queryContentPage",
+        "method": "POST",
+        "bodyJson": {
+          "pageNo": 1,
+          "pageSize": 50,
+          "dto": {
+            "siteId": "725",
+            "categoryId": "222"
+          }
+        },
+        "itemsPath": "res.rows",
+        "titlePaths": [
+          "title"
+        ],
+        "summaryPaths": [
+          "description"
+        ],
+        "urlTemplate": "https://cncico.zjgzzc.com/cms/default/webfile{raw:url}",
+        "publishedAtPath": "publishDate",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://cncico.zjgzzc.com/cms/default/webfile/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 50
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-cncico-hxr",
+      "name": "浙江交通集团电子招标采购管理系统 · 中标候选人公示",
+      "kind": "json_list",
+      "config": {
+        "url": "https://cncico.zjgzzc.com/cms/api/dynamicData/queryContentPage",
+        "method": "POST",
+        "bodyJson": {
+          "pageNo": 1,
+          "pageSize": 50,
+          "dto": {
+            "siteId": "725",
+            "categoryId": "225"
+          }
+        },
+        "itemsPath": "res.rows",
+        "titlePaths": [
+          "title"
+        ],
+        "summaryPaths": [
+          "description"
+        ],
+        "urlTemplate": "https://cncico.zjgzzc.com/cms/default/webfile{raw:url}",
+        "publishedAtPath": "publishDate",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://cncico.zjgzzc.com/cms/default/webfile/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 50
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-cncico-zbresult",
+      "name": "浙江交通集团电子招标采购管理系统 · 中标结果公告",
+      "kind": "json_list",
+      "config": {
+        "url": "https://cncico.zjgzzc.com/cms/api/dynamicData/queryContentPage",
+        "method": "POST",
+        "bodyJson": {
+          "pageNo": 1,
+          "pageSize": 50,
+          "dto": {
+            "siteId": "725",
+            "categoryId": "226"
+          }
+        },
+        "itemsPath": "res.rows",
+        "titlePaths": [
+          "title"
+        ],
+        "summaryPaths": [
+          "description"
+        ],
+        "urlTemplate": "https://cncico.zjgzzc.com/cms/default/webfile{raw:url}",
+        "publishedAtPath": "publishDate",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://cncico.zjgzzc.com/cms/default/webfile/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 50
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-lnjttz-zbgg",
+      "name": "辽宁交投集团电子招标采购平台 · 招标采购公告",
+      "kind": "json_list",
+      "config": {
+        "url": "https://zc.lnjttz.cn/cms/api/dynamicData/queryContentPage",
+        "method": "POST",
+        "bodyJson": {
+          "pageNo": 1,
+          "pageSize": 50,
+          "dto": {
+            "siteId": "725",
+            "categoryId": "232"
+          }
+        },
+        "itemsPath": "res.rows",
+        "titlePaths": [
+          "title"
+        ],
+        "summaryPaths": [
+          "description"
+        ],
+        "urlTemplate": "https://zc.lnjttz.cn/cms/default/webfile{raw:url}",
+        "publishedAtPath": "publishDate",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://zc.lnjttz.cn/cms/default/webfile/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 50
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-jxjtgjc-zbgg",
+      "name": "江西交投集团招标采购交易平台 · 招标公告",
+      "kind": "json_list",
+      "config": {
+        "url": "https://www.jxjtgjc.com/cms/api/dynamicData/queryContentPage",
+        "method": "POST",
+        "bodyJson": {
+          "pageNo": 1,
+          "pageSize": 50,
+          "dto": {
+            "siteId": "725",
+            "categoryId": "230"
+          }
+        },
+        "itemsPath": "res.rows",
+        "titlePaths": [
+          "title"
+        ],
+        "summaryPaths": [
+          "description"
+        ],
+        "urlTemplate": "https://www.jxjtgjc.com/cms/default/webfile{raw:url}",
+        "publishedAtPath": "publishDate",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://www.jxjtgjc.com/cms/default/webfile/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 50
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-jxjtgjc-result",
+      "name": "江西交投集团招标采购交易平台 · 结果公告",
+      "kind": "json_list",
+      "config": {
+        "url": "https://www.jxjtgjc.com/cms/api/dynamicData/queryContentPage",
+        "method": "POST",
+        "bodyJson": {
+          "pageNo": 1,
+          "pageSize": 50,
+          "dto": {
+            "siteId": "725",
+            "categoryId": "233"
+          }
+        },
+        "itemsPath": "res.rows",
+        "titlePaths": [
+          "title"
+        ],
+        "summaryPaths": [
+          "description"
+        ],
+        "urlTemplate": "https://www.jxjtgjc.com/cms/default/webfile{raw:url}",
+        "publishedAtPath": "publishDate",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://www.jxjtgjc.com/cms/default/webfile/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 50
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-jtyst-shanxi-zbgg",
+      "name": "山西省交通运输厅 · 招标公告",
+      "kind": "web_list",
+      "config": {
+        "url": "https://jtyst.shanxi.gov.cn/zwgk/gkml/zbtb/zbgg1/",
+        "parseMode": "html",
+        "itemSelector": "td.info",
+        "linkSelector": "a.info_bt",
+        "titleSelector": "a.info_bt",
+        "publishedAtRegex": "生成日期[^0-9]{0,120}(20\\d\\d-\\d\\d-\\d\\d)",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://jtyst.shanxi.gov.cn/zwgk/gkml/zbtb/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "省级"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-jtyst-shanxi-hxr",
+      "name": "山西省交通运输厅 · 招标结果公示",
+      "kind": "web_list",
+      "config": {
+        "url": "https://jtyst.shanxi.gov.cn/zwgk/gkml/zbtb/zbjggs/",
+        "parseMode": "html",
+        "itemSelector": "td.info",
+        "linkSelector": "a.info_bt",
+        "titleSelector": "a.info_bt",
+        "publishedAtRegex": "生成日期[^0-9]{0,120}(20\\d\\d-\\d\\d-\\d\\d)",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://jtyst.shanxi.gov.cn/zwgk/gkml/zbtb/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "省级"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false

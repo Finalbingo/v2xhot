@@ -20,16 +20,16 @@ export const EDITION_WHEN = {
 
 export const SITE = {
   /** 站名：导航、页面标题、分享图、RSS、MCP、后台都用它。 */
-  name: "MyHOT",
+  name: "车路云标讯",
   /**
    * 行业词：拼进默认说法里，比如“AI 日报”“AI 动态”。
    * 改成“法律”“HR”“黄金”之类，页面上就会变成“法律日报”“法律动态”。
    */
-  subject: "AI",
+  subject: "车路云",
   /** 首页的完整标题（浏览器标签、搜索结果）。 */
-  homeTitle: "MyHOT — AI 行业动态 · 每日精选与日报",
+  homeTitle: "车路云标讯 — 车路云一体化与智慧交通招投标 · 每日精选与日报",
   /** 主题目录页（/topics）的标题。 */
-  topicsTitle: "AI 主题：公司与模型、技术方向、内容形态的最新动态",
+  topicsTitle: "车路云主题：招标人与运营主体、技术方向、公告类型的最新标讯",
   /** 反馈表单输入框里的示例。 */
   feedbackExample: "例如：我在搜索某个关键词时遇到……我原本想……",
   /** 反馈页标题下面的一句话。 */
@@ -37,13 +37,13 @@ export const SITE = {
   /** 反馈表单邮箱框里的提示。 */
   feedbackEmailHint: "留下邮箱，我们可以回信联系你",
   /** 一句话介绍：搜索引擎、分享卡片、RSS、llms.txt 会用。 */
-  description: `从一批 AI 信源里挑出值得看的动态，把同一件事的多篇报道归到一起，${EDITION_WHEN.daily} 出一份日报。`,
+  description: `只盯官方公共资源交易、政府采购与交通央国企招投标平台，挑出车路云一体化与智慧交通的招标公告、采购意向和中标结果，把同一项目的多份公告归到一起，${EDITION_WHEN.daily} 出一份日报。`,
   /** llms.txt 里一句话介绍下面的一段详细介绍（选填）。 */
-  llmsIntro: null as string | null,
+  llmsIntro: "信源严格限定为国家级与省市级官方公共资源交易中心、政府采购网及大型交通央国企官方电子招投标平台；不抓第三方商业聚合平台、自媒体搬运与纯行业资讯站。每条标讯都附官方原链接，预算金额、项目编号、投标截止时间以原文为准。",
   /** 一行小字：分享图、海报下方。 */
-  tagline: "值得关注的 AI 动态",
+  tagline: "值得关注的车路云与智慧交通标讯",
   /** 搜索引擎读到的关键词（首页结构化数据）。 */
-  keywords: ["AI 资讯", "AI 新闻", "AI 日报", "AI 行业动态"] as string[],
+  keywords: ["车路云一体化", "智慧交通招标", "招投标监控", "RSU 路侧单元采购", "智能网联先导区", "车路云日报"] as string[],
   /**
    * 搜索引擎站长平台的网站验证（选填）：meta 名 → 平台给的验证码，放在首页的 head 里。
    * 比如 "baidu-site-verification": "codeva-…"、"msvalidate.01": "…"。验证通过后也要留着，平台会定期复查。
@@ -61,7 +61,7 @@ export const SITE = {
    * MCP 工具名的前缀（小写字母、数字、下划线），工具会叫 myhot_get_latest、myhot_search……
    * 已经有人接入后就不要再改。
    */
-  mcpPrefix: "myhot",
+  mcpPrefix: "cheluyun",
   /**
    * 公开接口（MCP、OpenAPI、llms.txt）的版本号，只升不降。
    * 改了接口里已有的字段或含义时升主版本，并在部署说明里写清。
@@ -81,12 +81,12 @@ export const SITE = {
   poweredBy: { name: "AIHOT", url: "https://aihot.news" } as { name: string; url: string } | null,
   /** 结构化数据里的网站运营者（搜索引擎用）。 */
   organization: {
-    name: "MyHOT",
+    name: "车路云标讯",
     /** 创始人（选填）。 */
     founder: null as Founder | null,
   },
   /** 抓取信源时报上的名字和版本（User-Agent 里用），不要冒用别的站。 */
-  crawlerName: "MyHOTBot/1.0",
+  crawlerName: "CheluyunBiaoxunBot/1.0",
 } as const;
 
 /** 使用规则和隐私说明两页（正文在 pages/ 里）。 */
@@ -154,15 +154,15 @@ export const ABOUT = {
   /** 页面描述（搜索结果、分享卡片）。 */
   description: `关于 ${SITE.name}：${SITE.description}`,
   /** 大标题：第一行正常颜色，第二行强调色。 */
-  headline: ["AI 圈每天都有新动静，", "值得看的，只有几条。"] as [string, string],
+  headline: ["车路云与智慧交通的标讯每天都在发，", "值得投的，只有几条。"] as [string, string],
   /** 标题下面的一段话。{sources} 会换成实时的信源数（两边自动加空格，所以 {sources} 两边不写空格）；统计没取到时换成 sourcesFallback。 */
-  lead: `${SITE.name} 替你盯着{sources}个信源：抓取、归并、打分、精选，${EDITION_WHEN.daily} 出一份日报。免费，不用注册。`,
+  lead: `${SITE.name} 替你盯着{sources}个官方招投标平台：抓取、归并、打分、精选，${EDITION_WHEN.daily} 出一份日报。免费，不用注册。`,
   sourcesFallback: "十几",
   /** 信源河动画下面的四个环节。 */
   steps: {
-    collect: "官方博客、媒体和个人的订阅源都在看；更新越勤的源看得越勤，最快 15 分钟看一次。",
-    store: "抓到的都存下来，同一件事的报道归到一起，热点榜就是从这里算出来的。",
-    select: `模型先看是不是这个行业的事、有没有实际信息，再写中文标题、摘要和${ITEM_COPY.reasonLabel}；营销稿和重复转发进不来。`,
+    collect: "官方公共资源交易、政府采购与交通央国企招投标平台都在看；更新越勤的源看得越勤，最快 15 分钟看一次。",
+    store: "抓到的都存下来，同一项目的公告归到一起，热点榜就是从这里算出来的。",
+    select: `模型先看是不是车路云与智慧交通的标讯、有没有官方原链接，再写中文标题、摘要和${ITEM_COPY.reasonLabel}；纯土木基建、后勤采购和二手转述进不来。`,
     publish: `${EDITION_WHEN.daily} 出日报，${EDITION_WHEN.weekly} 出周报，${EDITION_WHEN.monthly} 出月报。`,
   },
   /**
@@ -196,7 +196,7 @@ export const ADMIN = {
 /** Agent 接入页的示例。 */
 export const AGENT = {
   /** MCP 工具表里“搜索”一行：能搜什么、可以怎么问。 */
-  search: { scope: "按公司、产品、人物或话题搜最近 7 天", ask: "这家公司最近发了什么？" },
+  search: { scope: "按招标人、中标人、设备类型或地区搜最近 7 天", ask: "最近有哪些车路云相关的招标公告？" },
 };
 
 /** 日报、周报、月报版面上的说法。 */
@@ -207,21 +207,21 @@ export const REPORTS = {
   motto: SITE.subject as string,
   /** 每种报告页面的描述（搜索结果、分享卡片），不带句号；llms.txt 介绍周报、月报时也用它。 */
   descriptions: {
-    daily: `${SITE.name} ${subjectAfter(`${EDITION_WHEN.daily}（北京时间）发布的`, "行业精编日报")}`,
-    weekly: subjectAfter("每周", "行业综合回顾"),
-    monthly: subjectAfter("每月", "行业盘点"),
+    daily: `${SITE.name} ${subjectAfter(`${EDITION_WHEN.daily}（北京时间）发布的`, "标讯精编日报")}`,
+    weekly: subjectAfter("每周", "标讯综合回顾"),
+    monthly: subjectAfter("每月", "标讯盘点"),
   },
   /**
    * 一期里的一条怎么称呼（“4 件大事”）：没有头条时的标题（“这一天的 4 件 AI 大事”）、报头和往期目录的条数、
    * 周报月报没有总述时的那句话，以及订阅说明里的“按栏目分好的大事”都用它。
    */
-  entry: { measure: "件", noun: "大事" },
+  entry: { measure: "条", noun: "标讯" },
   /** 报头上其余几个数字后面的说法；精选数和日报期数在关于页、主题页也这样写。 */
-  metricUnits: { sourcesCount: "个来源", firstPartyEvents: "件一手发布", selectedCount: "条精选", reportsCovered: "期日报" },
+  metricUnits: { sourcesCount: "个来源", firstPartyEvents: "条一手公告", selectedCount: "条精选", reportsCovered: "期日报" },
   /** 报告分享图上“共几条”的说法。 */
-  shareUnit: "件大事",
+  shareUnit: "条标讯",
   /** 日报时段内有资料经过评判、但没有新大事时的标题与导语。 */
-  quiet: { title: "今日安静，无大事发生", paragraph: `${subjectAfter("北京时间 {start} 至 {end}，没有新的", "大事")}。` },
+  quiet: { title: "今日安静，无新标讯", paragraph: `${subjectAfter("北京时间 {start} 至 {end}，没有新的", "标讯")}。` },
 };
 
 /** 运维告警（只发给站长）里随部署而变的几处说法。 */
@@ -254,11 +254,11 @@ export const COMMUNITY_FEEDS: { dev: string[]; hn: string[] } = {
 /** 各页分享图（/og/pages/*.png）上的文字。主题目录页的那张按主题数自动生成。 */
 export const CARDS: Record<string, { kicker: string; title: string; subtitle: string; accent?: "hot" | "amber" }> = {
   site: { kicker: subjectAfter("每日", "精选"), title: SITE.tagline, subtitle: SITE.description },
-  all: { kicker: subjectAfter("全部", "动态"), title: "所有信源的最新动态，一站看完", subtitle: "按时间汇总各信源的最新动态，可按类别与标签筛选。" },
+  all: { kicker: subjectAfter("全部", "动态"), title: "所有官方平台的最新标讯，一站看完", subtitle: "按时间汇总各官方平台的最新标讯，可按类别与标签筛选。" },
   hot: { kicker: "热点榜", title: "过去 48 小时，大家在讨论什么", subtitle: "热度指数、趋势与组成热度的公开来源。", accent: "hot" },
-  daily: { kicker: withSubject("日报"), title: subjectAfter(`每天 ${spokenTime(EDITION_TIMES.daily)}，一份读得完的`, "日报"), subtitle: `${subjectAfter("前一天值得关注的", "动态")}。` },
-  weekly: { kicker: withSubject("周报"), title: `一周${REPORTS.entry.noun}，一次看清`, subtitle: "本周的主线、重要发布与值得回看的讨论。" },
-  monthly: { kicker: withSubject("月报"), title: "一个月的变化", subtitle: "月度主线与关键事件回顾。" },
+  daily: { kicker: withSubject("日报"), title: subjectAfter(`每天 ${spokenTime(EDITION_TIMES.daily)}，一份读得完的`, "日报"), subtitle: `${subjectAfter("前一天值得关注的", "标讯")}。` },
+  weekly: { kicker: withSubject("周报"), title: `一周${REPORTS.entry.noun}，一次看清`, subtitle: "本周的主线、重要公告与值得回看的标讯。" },
+  monthly: { kicker: withSubject("月报"), title: "一个月的变化", subtitle: "月度主线与关键标讯回顾。" },
   about: { kicker: "关于", title: `关于 ${SITE.name}`, subtitle: SITE.description },
   terms: { kicker: "使用规则", title: `${SITE.name} 使用规则`, subtitle: "网页、API、RSS 与 MCP 的使用范围。" },
   privacy: { kicker: "隐私说明", title: `${SITE.name} 隐私说明`, subtitle: "访问日志、浏览器本地数据与反馈资料的处理方式。" },
@@ -307,7 +307,7 @@ export const DEPLOYMENT = {
 /** RSS 订阅源的说明里随站点而变的说法。 */
 export const FEED_COPY = {
   /** “全部动态”源的说明里，除了未审内容、低相关条目、低分条目和已合并重复条目，还写明不含的内容（选填）。 */
-  allLeavesOut: [] as string[],
+  allLeavesOut: ["第三方商业聚合平台的转述", "无官方原链接的二手信息"] as string[],
 };
 
 /**
@@ -345,14 +345,14 @@ export const SEO_TITLES = {
   /** 热点榜（/hot）。 */
   hot: `${withSubject("热点榜")}：今日热门事件排行`,
   /** 全部动态（/all），不含搜索和筛选结果。 */
-  all: `${subjectAfter("最新", "动态")}：实时更新`,
+  all: `${subjectAfter("最新", "标讯")}：实时更新`,
   /** Agent 接入页（/agent）。 */
-  agent: `${withSubject("资讯")} API、MCP 与 RSS：接进你的 Agent`,
+  agent: `${withSubject("标讯")} API、MCP 与 RSS：接进你的 Agent`,
   /** 关于页（/about）的完整标题，已含站名。 */
   about: `关于 ${SITE.name}：${SITE.tagline}`,
   /** 日报、周报、月报的最新一期（/daily、/weekly、/monthly）；date 是这一期的日期：“11月7日”“10月26日—11月1日”“2026年10月”。 */
   latestReport: (kind: "daily" | "weekly" | "monthly", date: string): string =>
-    ({ daily: `${withSubject("日报")}：${subjectAfter("每日", "新闻")}（${date}）`, weekly: `${withSubject("周报")}：一周大事回顾（${date}）`, monthly: `${withSubject("月报")}：${date} 大事回顾` })[kind],
+    ({ daily: `${withSubject("日报")}：${subjectAfter("每日", "标讯")}（${date}）`, weekly: `${withSubject("周报")}：一周标讯回顾（${date}）`, monthly: `${withSubject("月报")}：${date} 标讯回顾` })[kind],
   /** 主题页第一页：公司搜“最新消息”，方向和内容类型搜“最新进展”；updated 是最新一篇精选的日期（“11月7日”），没有时为 null。 */
   topic: (name: string, group: "company" | "field" | "genre", updated: string | null): string =>
     `${name} ${group === "company" ? "最新消息与动态" : "最新动态与进展"}${updated ? `（${updated}更新）` : ""}`,
