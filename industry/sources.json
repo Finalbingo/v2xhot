@@ -1,5 +1,5 @@
 {
-  "$comment": "示范信源：首次启动时导入（scripts/seed.ts），已存在的不会被覆盖，改配置要在后台「信源」里改或重跑 seed 后手动 update；之后在后台新建、修改和暂停。全部为官方一手平台：中国政府采购网（中央/地方 × 7 类公告频道）、全国公共资源交易平台交易公开、天津市政府采购网、河北交投、山西省交通运输厅招标公告/结果公示（静态 td.info 列表）、湖北交投/浙江交通集团/辽宁交投/江西交投电子采购平台（同一套 CMS，POST /cms/api/dynamicData/queryContentPage，body 里的 categoryId 决定栏目；辽宁接口不按 categoryId 过滤，故只保留一条）。河北分网实测挡住：/province/cggg/zbgg/ 是静态列表（div.list-item + span.list-item-meta，框架 fromHtml 解出 50 条全部带日期），但采集器请求它返回 HTTP 403 —— 站点 WAF 拒的是框架的爬虫 UA（`Mozilla/5.0 (compatible; <站名>; +<站点>/about)`，http-fetch.ts 的 DEFAULT_UA），换浏览器 UA 同一 URL 就是 200；web_list 配置不支持覆盖 UA，所以没有接入（接了就是每天 403 的死源）。同类 403 大概率也解释了部分省级站探不到。本机验证限制：这台机器的代理把很多 .gov.cn 域名解析成 fake-IP（198.18.0.0/15），采集器的 SSRF 守卫按规则拒绝，所以这些站只能用真实网页 HTML 跑 fromHtml 验证选择器，不能用 fetchWebList 端到端跑；部署机上没有 fake-IP 时同一个配置即可。未接入：北京/吉林/黑龙江/安徽/福建/山东/河南/湖南/广东/重庆/四川/贵州/云南/甘肃/宁夏/新疆等省级公共服务平台本机连不通（curl 000），山西/内蒙古/湖北/海南的省级政采分网列表页是 JS 渲染（首页拿到的是 SPA 壳或 window.location.href 跳转桩，列表数据在 XHR 里，需按站写 modules/<slug>/ 或找到接口后配 json_list）；cebpubservice 的分省接口 deal.ggzy.gov.cn 仍不可达。字段说明见 docs/customize.md。",
+  "$comment": "示范信源：首次启动时导入（scripts/seed.ts），已存在的不会被覆盖，改配置要在后台「信源」里改或重跑 seed 后手动 update。全部为官方一手平台，共 69 条：中国政府采购网（中央/地方 × 7 类公告频道）、全国公共资源交易平台、天津市政府采购网、山西省交通运输厅、河北/湖北/浙江/辽宁/江西交投与晋能控股电子采购（同一套 CMS，POST /cms/api/dynamicData/queryContentPage，categoryId 决定栏目）、南方电网/国家能源/三峡/中烟/中盐/宝华/广州地铁/深圳地铁/中国建材等央企自有招标平台、苏州/南通/连云港/常州/淮安/泰州/蚌埠/潍坊/南阳/新乡/海口等市公共资源交易平台（新点 CMS：列表页 tr.ewb-trade-tr，或 /inteligentsearch/rest/esinteligentsearch/getFullTextDataNew 检索接口，linkurl 是相对路径、webdate 是时间）。每条都用采集器本体跑过：found>0 且日期解析正常才写入。未接入（实测挡住，别重复试）：河北政采分网 www.ccgp-hebei.gov.cn 与无锡 ggzyjy.wuxi.gov.cn 对框架默认爬虫 UA 返回 403（浏览器 UA 是 200，web_list 不支持覆盖 UA）；航空工业 ebid.eavic.com 对采集器的 GET 返回 405；大唐 ec.chng.com.cn/华电 chdtp.com/华能/五矿 是 WAF 412；通用技术 cg.gt.cn、中铝 zb.chinalco.com.cn、中国邮政 cg.11185.cn 的列表接口只接受 form-urlencoded POST 或日期与标题分列，框架配置项表达不了；鞍钢 bid.ansteel.cn 检索接口返回体里没有详情链接字段，拼不出 URL；浙能 zsrm.zjenergy.com.cn 标题里混着日期；湖州检索接口最新一条停在 2026-09；绵阳、国投、温州、北京/吉林/黑龙江/安徽/福建/山东/河南/湖南/广东/重庆/四川/贵州/云南/甘肃/宁夏/新疆等省级政采分网是 SPA 壳、JS 跳转桩或本机连不通。本机验证限制：这台机器的代理把很多域名解析成 fake-IP（198.18.0.0/15），采集器 SSRF 守卫按规则拒绝，端到端验证要临时 ALLOW_PRIVATE_NETWORK_FETCH=true，部署机上不需要。字段说明见 docs/customize.md。",
   "sources": [
     {
       "id": "web-ccgp-zygg",
@@ -1083,6 +1083,1223 @@
       "tags": [
         "官方",
         "省级"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-csg-zbgg",
+      "name": "南方电网公司供应链统一服务平台 · 招标公告",
+      "kind": "web_list",
+      "config": {
+        "parseMode": "html",
+        "itemSelector": "div.List2 ul li",
+        "linkSelector": "a[target=_blank]",
+        "publishedAtRegex": "(20\\d\\d-\\d\\d-\\d\\d)",
+        "url": "https://www.bidding.csg.cn/zbgg/index.jhtml",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-csg-fzbgg",
+      "name": "南方电网公司供应链统一服务平台 · 澄清变更公告",
+      "kind": "web_list",
+      "config": {
+        "parseMode": "html",
+        "itemSelector": "div.List2 ul li",
+        "linkSelector": "a[target=_blank]",
+        "publishedAtRegex": "(20\\d\\d-\\d\\d-\\d\\d)",
+        "url": "https://www.bidding.csg.cn/fzbgg/index.jhtml",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-csg-zbhxrgs",
+      "name": "南方电网公司供应链统一服务平台 · 中标候选人公示",
+      "kind": "web_list",
+      "config": {
+        "parseMode": "html",
+        "itemSelector": "div.List2 ul li",
+        "linkSelector": "a[target=_blank]",
+        "publishedAtRegex": "(20\\d\\d-\\d\\d-\\d\\d)",
+        "url": "https://www.bidding.csg.cn/zbhxrgs/index.jhtml",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-chnenergy-zbgg",
+      "name": "国家能源招标网 · 招标公告",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.chnenergybidding.com.cn/bidweb/001/001002/moreinfo.html",
+        "parseMode": "html",
+        "itemSelector": "li.right-item",
+        "linkSelector": "a.infolink",
+        "publishedAtSelector": "span.r",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-chnenergy-zbhxr",
+      "name": "国家能源招标网 · 中标候选人公示",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.chnenergybidding.com.cn/bidweb/001/001005/moreinfo.html",
+        "parseMode": "html",
+        "itemSelector": "li.right-item",
+        "linkSelector": "a.infolink",
+        "publishedAtSelector": "span.r",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-chnenergy-zbjs",
+      "name": "国家能源招标网 · 中标结果公告",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.chnenergybidding.com.cn/bidweb/001/001006/moreinfo.html",
+        "parseMode": "html",
+        "itemSelector": "li.right-item",
+        "linkSelector": "a.infolink",
+        "publishedAtSelector": "span.r",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-ctg-ywgg1",
+      "name": "中国三峡集团电子采购平台 · 招标专区招标公告",
+      "kind": "web_list",
+      "config": {
+        "url": "https://eps.ctg.com.cn/cms/channel/1ywgg1/index.htm",
+        "parseMode": "html",
+        "itemSelector": "li[name=\"li_name\"]",
+        "linkSelector": "a",
+        "publishedAtSelector": "a > em",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-ctg-ywgg3",
+      "name": "中国三峡集团电子采购平台 · 招标专区中标候选人公示",
+      "kind": "web_list",
+      "config": {
+        "url": "https://eps.ctg.com.cn/cms/channel/1ywgg3/index.htm",
+        "parseMode": "html",
+        "itemSelector": "li[name=\"li_name\"]",
+        "linkSelector": "a",
+        "publishedAtSelector": "a > em",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-ctg-ywgg4",
+      "name": "中国三峡集团电子采购平台 · 招标专区中标结果公示",
+      "kind": "web_list",
+      "config": {
+        "url": "https://eps.ctg.com.cn/cms/channel/1ywgg4/index.htm",
+        "parseMode": "html",
+        "itemSelector": "li[name=\"li_name\"]",
+        "linkSelector": "a",
+        "publishedAtSelector": "a > em",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-ctg-2ywgg1",
+      "name": "中国三峡集团电子采购平台 · 采购专区采购公告",
+      "kind": "web_list",
+      "config": {
+        "url": "https://eps.ctg.com.cn/cms/channel/2ywgg1/index.htm",
+        "parseMode": "html",
+        "itemSelector": "li[name=\"li_name\"]",
+        "linkSelector": "a",
+        "publishedAtSelector": "a > em",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-jnkg-ywbz",
+      "name": "晋能控股招标采购平台 · 依法必须招标",
+      "kind": "json_list",
+      "config": {
+        "url": "https://dzzb.jnkgjtdzzbgs.com/cms/api/dynamicData/queryContentPage",
+        "method": "POST",
+        "bodyJson": {
+          "pageNo": 1,
+          "pageSize": 50,
+          "dto": {
+            "siteId": "725",
+            "categoryId": "223"
+          }
+        },
+        "itemsPath": "res.rows",
+        "titlePaths": [
+          "title"
+        ],
+        "urlTemplate": "https://dzzb.jnkgjtdzzbgs.com/cms/default/webfile{raw:url}",
+        "publishedAtPath": "publishDate",
+        "publishedAtUtcOffset": "+08:00",
+        "summaryPaths": [
+          "description"
+        ],
+        "allowUrlPrefixes": [
+          "https://dzzb.jnkgjtdzzbgs.com/cms/default/webfile/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-jnkg-fybz",
+      "name": "晋能控股招标采购平台 · 非依法必须招标",
+      "kind": "json_list",
+      "config": {
+        "url": "https://dzzb.jnkgjtdzzbgs.com/cms/api/dynamicData/queryContentPage",
+        "method": "POST",
+        "bodyJson": {
+          "pageNo": 1,
+          "pageSize": 50,
+          "dto": {
+            "siteId": "725",
+            "categoryId": "230"
+          }
+        },
+        "itemsPath": "res.rows",
+        "titlePaths": [
+          "title"
+        ],
+        "urlTemplate": "https://dzzb.jnkgjtdzzbgs.com/cms/default/webfile{raw:url}",
+        "publishedAtPath": "publishDate",
+        "publishedAtUtcOffset": "+08:00",
+        "summaryPaths": [
+          "description"
+        ],
+        "allowUrlPrefixes": [
+          "https://dzzb.jnkgjtdzzbgs.com/cms/default/webfile/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-tobacco-zbgg",
+      "name": "中烟电子采购平台 · 招标公告",
+      "kind": "web_list",
+      "config": {
+        "url": "https://cgjy.tobacco.com.cn/zbNotice/index.jhtml",
+        "parseMode": "html",
+        "itemSelector": "ul.searchList > li",
+        "linkSelector": "a[href$='.jhtml']",
+        "titleSelector": "span.span_hover",
+        "publishedAtSelector": "i.release_date",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-tobacco-zbhxrgs",
+      "name": "中烟电子采购平台 · 中标候选人公示",
+      "kind": "web_list",
+      "config": {
+        "url": "https://cgjy.tobacco.com.cn/zbhxrgs/index.jhtml",
+        "parseMode": "html",
+        "itemSelector": "ul.searchList > li",
+        "linkSelector": "a[href$='.jhtml']",
+        "titleSelector": "span.span_hover",
+        "publishedAtSelector": "i.release_date",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-chinasalt-zbgg",
+      "name": "中盐集团电子采购平台 · 招标公告",
+      "kind": "web_list",
+      "config": {
+        "parseMode": "html",
+        "itemSelector": "a[target=_blank]",
+        "titleSelector": "div.title",
+        "publishedAtRegex": "发布时间[^0-9]{0,40}(20\\d\\d-\\d\\d-\\d\\d)",
+        "url": "https://ecp.chinasalt.com.cn/zbcg/001001/zjcg_zbgg.html",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-chinasalt-more",
+      "name": "中盐集团电子采购平台 · 中标候选人公示",
+      "kind": "web_list",
+      "config": {
+        "url": "https://ecp.chinasalt.com.cn/zbcg/001003/moreinfo.html",
+        "parseMode": "html",
+        "itemSelector": "a.public-list-item",
+        "titleSelector": "div.title",
+        "publishedAtSelector": "div.date",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-baohua-jyxx",
+      "name": "宝华智慧招标共享平台 · 交易公告",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.baohuabidding.cn/shbhgjzb/jyxx/018001/trade_notice.html",
+        "parseMode": "html",
+        "itemSelector": "li.public-list-item",
+        "linkSelector": "a.title",
+        "publishedAtSelector": "span.date",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-gzmtr-zbgg",
+      "name": "广州地铁招标投标网站 · 招标公告",
+      "kind": "web_list",
+      "config": {
+        "url": "https://bid.gzmtr.com/bizzbgg/",
+        "parseMode": "html",
+        "itemSelector": "ul.list > li",
+        "linkSelector": "a",
+        "publishedAtSelector": "span.pub_date",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-gzmtr-zbgs",
+      "name": "广州地铁招标投标网站 · 中标公示",
+      "kind": "web_list",
+      "config": {
+        "url": "https://bid.gzmtr.com/bizzbgs/",
+        "parseMode": "html",
+        "itemSelector": "ul.list > li",
+        "linkSelector": "a",
+        "publishedAtSelector": "span.pub_date",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-szmc-zbgg",
+      "name": "深圳地铁智能招采管理平台 · 招标公告",
+      "kind": "web_list",
+      "config": {
+        "parseMode": "html",
+        "itemSelector": "ul > li",
+        "linkSelector": "a[href*='/zzbgg/']",
+        "publishedAtRegex": "发布时间[^0-9]{0,40}(20\\d\\d-\\d\\d-\\d\\d)",
+        "url": "https://cg.shenzhenmc.com/zzbgg/index.jhtml",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-szmc-hxrgs",
+      "name": "深圳地铁智能招采管理平台 · 中标候选人公示",
+      "kind": "web_list",
+      "config": {
+        "parseMode": "html",
+        "itemSelector": "ul > li",
+        "linkSelector": "a[href*='/zzbhxrgs/']",
+        "publishedAtRegex": "发布时间[^0-9]{0,40}(20\\d\\d-\\d\\d-\\d\\d)",
+        "url": "https://cg.shenzhenmc.com/zzbhxrgs/index.jhtml",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-cnbm-cg",
+      "name": "中国建材集团招标采购管理平台 · 采购公告",
+      "kind": "web_list",
+      "config": {
+        "url": "https://tendering.cnbm.com.cn/search/opportunity?projectType=1&noticeType=0",
+        "parseMode": "html",
+        "itemSelector": "li.liBorderBottom",
+        "linkSelector": "p.nameL a",
+        "publishedAtRegex": "(20\\d\\d-\\d\\d-\\d\\d)",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "官方",
+        "央企国企"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-suzhou-zbgg",
+      "name": "苏州市公共资源交易平台 · 招标公告",
+      "kind": "web_list",
+      "config": {
+        "url": "https://ggzy.suzhou.gov.cn/jyxx/003001/003001001/tradeInfo.html",
+        "parseMode": "html",
+        "itemSelector": "tr.ewb-trade-tr",
+        "linkSelector": "td.ewb-trade-td a",
+        "publishedAtRegex": "(20\\d\\d-\\d\\d-\\d\\d)",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "公共资源交易"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-suzhou-zbjg",
+      "name": "苏州市公共资源交易平台 · 中标结果公告",
+      "kind": "web_list",
+      "config": {
+        "url": "https://ggzy.suzhou.gov.cn/jyxx/003001/003001008/tradeInfo.html",
+        "parseMode": "html",
+        "itemSelector": "tr.ewb-trade-tr",
+        "linkSelector": "td.ewb-trade-td a",
+        "publishedAtRegex": "(20\\d\\d-\\d\\d-\\d\\d)",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "公共资源交易"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-nantong-zbgg",
+      "name": "南通市公共资源交易网 · 招标公告",
+      "kind": "web_list",
+      "config": {
+        "url": "https://ggzyjy.nantong.gov.cn/jyxx/003001/003001001/tradeInfo.html",
+        "parseMode": "html",
+        "itemSelector": "tr.ewb-trade-tr",
+        "linkSelector": "td.ewb-trade-td a",
+        "publishedAtRegex": "(20\\d\\d-\\d\\d-\\d\\d)",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "公共资源交易"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-nantong-gcjs",
+      "name": "南通市公共资源交易网 · 政府采购中标成交公告",
+      "kind": "web_list",
+      "config": {
+        "url": "https://ggzyjy.nantong.gov.cn/jyxx/003002/003002001/003002001011/tradeInfo.html",
+        "parseMode": "html",
+        "itemSelector": "tr.ewb-trade-tr",
+        "linkSelector": "td.ewb-trade-td a",
+        "publishedAtRegex": "(20\\d\\d-\\d\\d-\\d\\d)",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "公共资源交易"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-lyg-zbgg",
+      "name": "连云港市公共资源交易平台 · 招标公告",
+      "kind": "web_list",
+      "config": {
+        "url": "https://ggzy.lyg.gov.cn/lygweb/jyxx/001001/001001001/tradeInfo.html",
+        "parseMode": "html",
+        "itemSelector": "tr.ewb-trade-tr",
+        "linkSelector": "td.ewb-trade-td a",
+        "publishedAtRegex": "(20\\d\\d-\\d\\d-\\d\\d)",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "公共资源交易"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-lyg-zbjg",
+      "name": "连云港市公共资源交易平台 · 中标结果公告",
+      "kind": "web_list",
+      "config": {
+        "url": "https://ggzy.lyg.gov.cn/lygweb/jyxx/001001/001001005/tradeInfo.html",
+        "parseMode": "html",
+        "itemSelector": "tr.ewb-trade-tr",
+        "linkSelector": "td.ewb-trade-td a",
+        "publishedAtRegex": "(20\\d\\d-\\d\\d-\\d\\d)",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "公共资源交易"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-haikou-caigou",
+      "name": "海口市公共资源交易中心 · 政府采购公告",
+      "kind": "web_list",
+      "config": {
+        "parseMode": "html",
+        "itemSelector": "ul.content-list li",
+        "linkSelector": "a.clearfix",
+        "titleSelector": "p[style*=65]",
+        "publishedAtSelector": "p.date",
+        "url": "https://ggzy.haikou.gov.cn/caigougg",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "公共资源交易"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-haikou-gongcheng",
+      "name": "海口市公共资源交易中心 · 工程建设公告",
+      "kind": "web_list",
+      "config": {
+        "parseMode": "html",
+        "itemSelector": "ul.content-list li",
+        "linkSelector": "a.clearfix",
+        "titleSelector": "p[style*=65]",
+        "publishedAtSelector": "p.date",
+        "url": "https://ggzy.haikou.gov.cn/gongchengjs",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "公共资源交易"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-changzhou-jyxx",
+      "name": "常州市公共资源交易网 · 交易信息",
+      "kind": "json_list",
+      "config": {
+        "url": "https://ggzy.changzhou.gov.cn/inteligentsearch/rest/esinteligentsearch/getFullTextDataNew",
+        "method": "POST",
+        "bodyJson": {
+          "token": "",
+          "pn": 0,
+          "rn": 30,
+          "sdt": "",
+          "edt": "",
+          "wd": "",
+          "inc_wd": "",
+          "exc_wd": "",
+          "fields": "title",
+          "cnum": "001",
+          "sort": "{\"webdate\":\"0\"}",
+          "ssort": "title",
+          "cl": 200,
+          "terminal": "",
+          "condition": null,
+          "time": null,
+          "highlights": "",
+          "statistics": null,
+          "unionCondition": null,
+          "accuracy": "",
+          "noParticiple": "1",
+          "searchRange": null,
+          "isBusiness": "1"
+        },
+        "itemsPath": "result.records",
+        "titlePaths": [
+          "title"
+        ],
+        "urlTemplate": "https://ggzy.changzhou.gov.cn{raw:linkurl}",
+        "publishedAtPath": "webdate",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://ggzy.changzhou.gov.cn/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "公共资源交易"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-huaian-jyxx",
+      "name": "淮安市公共资源交易中心 · 交易信息",
+      "kind": "json_list",
+      "config": {
+        "url": "https://ggzy.huaian.gov.cn/inteligentsearch/rest/esinteligentsearch/getFullTextDataNew",
+        "method": "POST",
+        "bodyJson": {
+          "token": "",
+          "pn": 0,
+          "rn": 30,
+          "sdt": "",
+          "edt": "",
+          "wd": "",
+          "inc_wd": "",
+          "exc_wd": "",
+          "fields": "title",
+          "cnum": "001",
+          "sort": "{\"webdate\":\"0\"}",
+          "ssort": "title",
+          "cl": 200,
+          "terminal": "",
+          "condition": null,
+          "time": null,
+          "highlights": "",
+          "statistics": null,
+          "unionCondition": null,
+          "accuracy": "",
+          "noParticiple": "1",
+          "searchRange": null,
+          "isBusiness": "1"
+        },
+        "itemsPath": "result.records",
+        "titlePaths": [
+          "title"
+        ],
+        "urlTemplate": "https://ggzy.huaian.gov.cn{raw:linkurl}",
+        "publishedAtPath": "webdate",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://ggzy.huaian.gov.cn/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "公共资源交易"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-taizhou-jyxx",
+      "name": "泰州市公共资源交易网 · 交易信息",
+      "kind": "json_list",
+      "config": {
+        "url": "http://ggzy.taizhou.gov.cn/inteligentsearch/rest/esinteligentsearch/getFullTextDataNew",
+        "method": "POST",
+        "bodyJson": {
+          "token": "",
+          "pn": 0,
+          "rn": 30,
+          "sdt": "",
+          "edt": "",
+          "wd": "",
+          "inc_wd": "",
+          "exc_wd": "",
+          "fields": "title",
+          "cnum": "001",
+          "sort": "{\"webdate\":\"0\"}",
+          "ssort": "title",
+          "cl": 200,
+          "terminal": "",
+          "condition": null,
+          "time": null,
+          "highlights": "",
+          "statistics": null,
+          "unionCondition": null,
+          "accuracy": "",
+          "noParticiple": "1",
+          "searchRange": null,
+          "isBusiness": "1"
+        },
+        "itemsPath": "result.records",
+        "titlePaths": [
+          "title"
+        ],
+        "urlTemplate": "http://ggzy.taizhou.gov.cn{raw:linkurl}",
+        "publishedAtPath": "webdate",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "http://ggzy.taizhou.gov.cn/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "公共资源交易"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-bengbu-jyxx",
+      "name": "蚌埠市公共资源交易网 · 交易信息",
+      "kind": "json_list",
+      "config": {
+        "url": "https://ggzy.bengbu.gov.cn/inteligentsearch/rest/esinteligentsearch/getFullTextDataNew",
+        "method": "POST",
+        "bodyJson": {
+          "token": "",
+          "pn": 0,
+          "rn": 30,
+          "sdt": "",
+          "edt": "",
+          "wd": "",
+          "inc_wd": "",
+          "exc_wd": "",
+          "fields": "title",
+          "cnum": "001",
+          "sort": "{\"webdate\":\"0\"}",
+          "ssort": "title",
+          "cl": 200,
+          "terminal": "",
+          "condition": null,
+          "time": null,
+          "highlights": "",
+          "statistics": null,
+          "unionCondition": null,
+          "accuracy": "",
+          "noParticiple": "1",
+          "searchRange": null,
+          "isBusiness": "1"
+        },
+        "itemsPath": "result.records",
+        "titlePaths": [
+          "title"
+        ],
+        "urlTemplate": "https://ggzy.bengbu.gov.cn{raw:linkurl}",
+        "publishedAtPath": "webdate",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://ggzy.bengbu.gov.cn/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "公共资源交易"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-weifang-jyxx",
+      "name": "潍坊市公共资源交易网 · 交易信息",
+      "kind": "json_list",
+      "config": {
+        "url": "https://ggzy.weifang.gov.cn/inteligentsearch/rest/esinteligentsearch/getFullTextDataNew",
+        "method": "POST",
+        "bodyJson": {
+          "token": "",
+          "pn": 0,
+          "rn": 30,
+          "sdt": "",
+          "edt": "",
+          "wd": "",
+          "inc_wd": "",
+          "exc_wd": "",
+          "fields": "title",
+          "cnum": "001",
+          "sort": "{\"webdate\":\"0\"}",
+          "ssort": "title",
+          "cl": 200,
+          "terminal": "",
+          "condition": null,
+          "time": null,
+          "highlights": "",
+          "statistics": null,
+          "unionCondition": null,
+          "accuracy": "",
+          "noParticiple": "1",
+          "searchRange": null,
+          "isBusiness": "1"
+        },
+        "itemsPath": "result.records",
+        "titlePaths": [
+          "title"
+        ],
+        "urlTemplate": "https://ggzy.weifang.gov.cn{raw:linkurl}",
+        "publishedAtPath": "webdate",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://ggzy.weifang.gov.cn/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "公共资源交易"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-nanyang-jyxx",
+      "name": "南阳市公共资源交易中心 · 交易信息",
+      "kind": "json_list",
+      "config": {
+        "url": "https://ggzyjy.nanyang.gov.cn/inteligentsearch/rest/esinteligentsearch/getFullTextDataNew",
+        "method": "POST",
+        "bodyJson": {
+          "token": "",
+          "pn": 0,
+          "rn": 30,
+          "sdt": "",
+          "edt": "",
+          "wd": "",
+          "inc_wd": "",
+          "exc_wd": "",
+          "fields": "title",
+          "cnum": "001",
+          "sort": "{\"webdate\":\"0\"}",
+          "ssort": "title",
+          "cl": 200,
+          "terminal": "",
+          "condition": null,
+          "time": null,
+          "highlights": "",
+          "statistics": null,
+          "unionCondition": null,
+          "accuracy": "",
+          "noParticiple": "1",
+          "searchRange": null,
+          "isBusiness": "1"
+        },
+        "itemsPath": "result.records",
+        "titlePaths": [
+          "title"
+        ],
+        "urlTemplate": "https://ggzyjy.nanyang.gov.cn{raw:linkurl}",
+        "publishedAtPath": "webdate",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://ggzyjy.nanyang.gov.cn/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "公共资源交易"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-xinxiang-jyxx",
+      "name": "新乡市公共资源交易网 · 交易信息",
+      "kind": "json_list",
+      "config": {
+        "url": "https://ggzy.xinxiang.gov.cn/inteligentsearch/rest/esinteligentsearch/getFullTextDataNew",
+        "method": "POST",
+        "bodyJson": {
+          "token": "",
+          "pn": 0,
+          "rn": 30,
+          "sdt": "",
+          "edt": "",
+          "wd": "",
+          "inc_wd": "",
+          "exc_wd": "",
+          "fields": "title",
+          "cnum": "001",
+          "sort": "{\"webdate\":\"0\"}",
+          "ssort": "title",
+          "cl": 200,
+          "terminal": "",
+          "condition": null,
+          "time": null,
+          "highlights": "",
+          "statistics": null,
+          "unionCondition": null,
+          "accuracy": "",
+          "noParticiple": "1",
+          "searchRange": null,
+          "isBusiness": "1"
+        },
+        "itemsPath": "result.records",
+        "titlePaths": [
+          "title"
+        ],
+        "urlTemplate": "https://ggzy.xinxiang.gov.cn{raw:linkurl}",
+        "publishedAtPath": "webdate",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://ggzy.xinxiang.gov.cn/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "公共资源交易"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false
